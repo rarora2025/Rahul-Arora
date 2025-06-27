@@ -19,6 +19,8 @@
                 <a href="https://www.linkedin.com/in/rahul-arora-114540219/" target="_blank"><i class="fab fa-linkedin"></i></a>
                 <a href="https://github.com/rarora2025" target="_blank"><i class="fab fa-github"></i></a>
             </div>
+            <div class="pdf-phone">203-274-3477</div>
+            <div class="pdf-email">arora.rahul@columbia.edu</div>
             <a href="#" id="download-pdf" class="btn-project header-btn">Download PDF</a>
         </header>
 
@@ -140,19 +142,6 @@
             <section id="projects" class="content-section">
                 <h2>Projects</h2>
                 <div class="entry">
-                     <div class="entry-left">
-                        <img src="idk.png" alt="idk App Logo" class="project-logo">
-                        <div class="entry-details">
-                            <h3>idk: AI Decision Maker (iOS App)</h3>
-                            <p class="entry-description">Built an AI-driven decision-making app, using Swift and the OpenAI API, and released it on the App Store. Allows users to get a recommendation using AI.</p>
-                            <a href="https://apps.apple.com/us/app/idk-ai-decision-maker/id6747454149" target="_blank" rel="noopener noreferrer" class="btn-project">View Project</a>
-                        </div>
-                    </div>
-                     <div class="entry-date">
-                        <p>June 2025 - Present</p>
-                    </div>
-                </div>
-                <div class="entry">
                     <div class="entry-left">
                         <img src="opp.png" alt="Oppfinity Logo" class="project-logo">
                         <div class="entry-details">
@@ -175,6 +164,19 @@
                     </div>
                     <div class="entry-date">
                         <p>Apr 2024 - Present</p>
+                    </div>
+                </div>
+                <div class="entry">
+                     <div class="entry-left">
+                        <img src="idk.png" alt="idk App Logo" class="project-logo">
+                        <div class="entry-details">
+                            <h3>idk: AI Decision Maker (iOS App)</h3>
+                            <p class="entry-description">Built an AI-driven decision-making app, using Swift and the OpenAI API, and released it on the App Store. Allows users to get a recommendation using AI.</p>
+                            <a href="https://apps.apple.com/us/app/idk-ai-decision-maker/id6747454149" target="_blank" rel="noopener noreferrer" class="btn-project">View Project</a>
+                        </div>
+                    </div>
+                     <div class="entry-date">
+                        <p>June 2025 - June 2025</p>
                     </div>
                 </div>
                 <div class="entry">
@@ -212,14 +214,22 @@
         document.getElementById('download-pdf').addEventListener('click', function(event) {
             event.preventDefault();
             const element = document.querySelector('.container');
+            
+            // Add PDF mode class for smaller fonts and no images
+            element.classList.add('pdf-mode');
+            
             const opt = {
-              margin:       [0.5, 0.5, 0.5, 0.5],
+              margin:       [0.3, 0.3, 0.3, 0.3],
               filename:     'Rahul_Arora_Resume.pdf',
               image:        { type: 'jpeg', quality: 0.98 },
               html2canvas:  { scale: 2, useCORS: true },
               jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
-            html2pdf().from(element).set(opt).save();
+            
+            html2pdf().from(element).set(opt).save().then(() => {
+                // Remove PDF mode class after generation
+                element.classList.remove('pdf-mode');
+            });
         });
     </script>
 </body>
