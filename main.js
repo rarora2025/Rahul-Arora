@@ -10,155 +10,84 @@ document.querySelectorAll('.toggle button').forEach(function (btn) {
     });
 });
 
-// Flickable name. Each letter becomes a little ball: drag and release to throw it,
-// or click to pop it up. Gravity pulls it to the bottom of the viewport, and once it
-// settles it walks back home.
+// Name animation. Letters rise in one after another, then react to the cursor:
+// the letters nearest it thin out, lift and pick up the accent color, and ease back
+// as it moves away. A single sweep runs after the intro so touch users see it too.
 (function () {
+    var name = document.querySelector('.name');
+    var letters = Array.prototype.slice.call(name.querySelectorAll('.l'));
     var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var letters = Array.prototype.slice.call(document.querySelectorAll('.name .l'));
-    var GRAVITY = 2400, BOUNCE = 0.55, FRICTION = 0.985, REST_MS = 1400, HOME_MS = 650;
 
-    var bodies = letters.map(function (el) {
-        return { el: el, x: 0, y: 0, vx: 0, vy: 0, r: 0, vr: 0, state: 'home', restAt: 0 };
+    letters.forEach(function (el, i) { el.style.setProperty('--i', i); });
+    if (reduced) {
+        name.classList.add('ready');
+        return;
+    }
+    requestAnimationFrame(function () {
+        requestAnimationFrame(function () { name.classList.add('ready'); });
     });
 
-    var running = false, last = 0;
+    var BASE = 800, MIN = 250, RADIUS = 110, EASE = 0.14;
+    var state = letters.map(function () { return { f: 0 }; });
+    var pointer = null, sweep = null, running = false;
 
-    function bounds(b) {
-        // Letter's home box in viewport coords, so we can keep it on screen
-        var rect = b.el.getBoundingClientRect();
-        var homeLeft = rect.left - b.x, homeTop = rect.top - b.y;
-        return {
-            minX: -homeLeft,
-            maxX: document.documentElement.clientWidth - homeLeft - rect.width,
-            maxY: window.innerHeight - homeTop - rect.height - 8
-        };
+    function centers() {
+        return letters.map(function (el) {
+            var r = el.getBoundingClientRect();
+            return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+        });
     }
 
-    function render(b) {
-        b.el.style.transform = 'translate(' + b.x + 'px,' + b.y + 'px) rotate(' + b.r + 'deg)';
-    }
+    function frame(now) {
+        var target = pointer;
+        if (sweep) {
+            var t = (now - sweep.t0) / sweep.ms;
+            if (t >= 1) sweep = null;
+            else target = { x: sweep.x0 + (sweep.x1 - sweep.x0) * t, y: sweep.y };
+        }
 
-    function tick(now) {
-        var dt = Math.min((now - last) / 1000, 1 / 30);
-        last = now;
-        var active = false;
-
-        bodies.forEach(function (b) {
-            if (b.state === 'flying') {
-                active = true;
-                var lim = bounds(b);
-                b.vy += GRAVITY * dt;
-                b.vx *= FRICTION;
-                b.vr *= FRICTION;
-                b.x += b.vx * dt;
-                b.y += b.vy * dt;
-                b.r += b.vr * dt;
-
-                if (b.x < lim.minX) { b.x = lim.minX; b.vx = Math.abs(b.vx) * BOUNCE; }
-                if (b.x > lim.maxX) { b.x = lim.maxX; b.vx = -Math.abs(b.vx) * BOUNCE; }
-                if (b.y > lim.maxY) {
-                    b.y = lim.maxY;
-                    b.vy = -Math.abs(b.vy) * BOUNCE;
-                    b.vx *= 0.8;
-                    b.vr *= 0.7;
-                    if (Math.abs(b.vy) < 60) b.vy = 0;
-                }
-
-                var resting = b.vy === 0 && Math.abs(b.vx) < 20;
-                if (resting) {
-                    if (!b.restAt) b.restAt = now;
-                    if (now - b.restAt > REST_MS) goHome(b, now);
-                } else {
-                    b.restAt = 0;
-                }
-                render(b);
-            } else if (b.state === 'returning') {
-                active = true;
-                var t = Math.min((now - b.t0) / HOME_MS, 1);
-                var e = 1 - Math.pow(1 - t, 3);
-                b.x = b.fx * (1 - e);
-                b.y = b.fy * (1 - e) - Math.sin(Math.PI * t) * 40;
-                b.r = b.fr * (1 - e);
-                render(b);
-                if (t === 1) {
-                    b.state = 'home';
-                    b.x = b.y = b.r = 0;
-                    b.el.style.transform = '';
-                    b.el.classList.remove('flying');
-                }
-            } else if (b.state === 'held') {
-                active = true;
+        var pts = centers(), moving = false;
+        letters.forEach(function (el, i) {
+            var goal = 0;
+            if (target) {
+                var dx = pts[i].x - target.x, dy = (pts[i].y - target.y) * 1.4;
+                goal = Math.exp(-(dx * dx + dy * dy) / (RADIUS * RADIUS));
             }
+            var s = state[i];
+            s.f += (goal - s.f) * EASE;
+            if (Math.abs(goal - s.f) > 0.002) moving = true;
+            else s.f = goal;
+            el.style.fontVariationSettings = '"wght" ' + Math.round(BASE - (BASE - MIN) * s.f);
+            el.style.transform = s.f > 0.001 ? 'translateY(' + (-0.08 * s.f).toFixed(3) + 'em)' : '';
+            el.style.color = s.f > 0.001 ? 'color-mix(in srgb, var(--court) ' + Math.round(s.f * 100) + '%, var(--ink))' : '';
         });
 
-        if (active) requestAnimationFrame(tick);
+        if (moving || sweep || pointer) requestAnimationFrame(frame);
         else running = false;
     }
 
     function start() {
         if (running) return;
         running = true;
-        last = performance.now();
-        requestAnimationFrame(tick);
+        requestAnimationFrame(frame);
     }
 
-    function goHome(b, now) {
-        b.state = 'returning';
-        b.t0 = now;
-        b.fx = b.x; b.fy = b.y; b.fr = b.r % 360;
-        b.restAt = 0;
-    }
-
-    function launch(b, vx, vy) {
-        b.state = 'flying';
-        b.vx = vx;
-        b.vy = vy;
-        b.vr = vx * 0.6 + (Math.random() - 0.5) * 400;
-        b.restAt = 0;
-        b.el.classList.add('flying');
+    var hero = document.querySelector('.hero');
+    hero.addEventListener('pointermove', function (e) {
+        pointer = { x: e.clientX, y: e.clientY };
         start();
-    }
-
-    if (reduced) return;
-
-    bodies.forEach(function (b) {
-        var drag = null;
-
-        b.el.addEventListener('pointerdown', function (ev) {
-            ev.preventDefault();
-            b.el.setPointerCapture(ev.pointerId);
-            b.state = 'held';
-            b.el.classList.add('flying');
-            drag = { sx: ev.clientX - b.x, sy: ev.clientY - b.y, px: ev.clientX, py: ev.clientY, pt: ev.timeStamp, vx: 0, vy: 0, moved: 0 };
-            start();
-        });
-
-        b.el.addEventListener('pointermove', function (ev) {
-            if (!drag) return;
-            var dt = Math.max(ev.timeStamp - drag.pt, 1) / 1000;
-            drag.vx = (ev.clientX - drag.px) / dt;
-            drag.vy = (ev.clientY - drag.py) / dt;
-            drag.moved += Math.abs(ev.clientX - drag.px) + Math.abs(ev.clientY - drag.py);
-            drag.px = ev.clientX; drag.py = ev.clientY; drag.pt = ev.timeStamp;
-            b.x = ev.clientX - drag.sx;
-            b.y = ev.clientY - drag.sy;
-            render(b);
-        });
-
-        function release() {
-            if (!drag) return;
-            if (drag.moved < 6) {
-                // A click: pop it up with a bit of sideways spin
-                launch(b, (Math.random() - 0.5) * 500, -900 - Math.random() * 300);
-            } else {
-                var cap = 3000;
-                launch(b, Math.max(-cap, Math.min(cap, drag.vx)), Math.max(-cap, Math.min(cap, drag.vy)));
-            }
-            drag = null;
-        }
-
-        b.el.addEventListener('pointerup', release);
-        b.el.addEventListener('pointercancel', release);
     });
+    hero.addEventListener('pointerleave', function () {
+        pointer = null;
+        start();
+    });
+
+    // Once the intro has landed, hand the letters to JS and run one sweep
+    var introMs = 900 + letters.length * 45;
+    setTimeout(function () {
+        name.classList.add('live');
+        var r = name.getBoundingClientRect();
+        sweep = { t0: performance.now(), ms: 1600, x0: r.left - RADIUS, x1: r.right + RADIUS, y: r.top + r.height / 2 };
+        start();
+    }, introMs);
 })();
