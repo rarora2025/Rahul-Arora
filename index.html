@@ -8,8 +8,9 @@
     <link rel="icon" href="RA.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;800&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <script>document.documentElement.classList.add('js');</script>
 </head>
 <body>
     <main class="page">
@@ -20,7 +21,7 @@
                 <span class="word"><span class="l">A</span><span class="l">r</span><span class="l">o</span><span class="l">r</span><span class="l">a</span></span>
             </h1>
             <p class="intro">Hi, I'm Rahul. I study computer science at Columbia, and I build things where data meets people: markets, forecasts, and apps people actually open.</p>
-            <p class="hint">Go ahead, take a shot at a letter. They get back up.</p>
+            <p class="hint">Move your cursor across my name.</p>
         </header>
 
         <section class="block" aria-labelledby="lately">
@@ -33,6 +34,12 @@
             </div>
 
             <ol class="timeline" data-panel="now">
+                <li>
+                    <div class="t-top"><span class="t-role">Venture Fellow <span class="t-org">&middot; Pear VC</span></span><span class="t-date">Aug 2026&ndash;now</span></div>
+                </li>
+                <li>
+                    <div class="t-top"><span class="t-role">Board Member <span class="t-org">&middot; Columbia Organization of Rising Entrepreneurs</span></span><span class="t-date">Jun 2026&ndash;now</span></div>
+                </li>
                 <li>
                     <div class="t-top"><span class="t-role">Research Assistant <span class="t-org">&middot; Columbia Creative Machines Lab</span></span><span class="t-date">now</span></div>
                     <p>Teaching a robot to spot trash and pick it up, with vision and RL-based control. Working under Prof. Hod Lipson.</p>
@@ -49,6 +56,12 @@
 
             <ol class="timeline" data-panel="prev" hidden>
                 <li>
+                    <div class="t-top"><span class="t-role">Software Engineer <span class="t-org">&middot; Columbia Build Lab</span></span><span class="t-date">Jan&ndash;May 2026</span></div>
+                </li>
+                <li>
+                    <div class="t-top"><span class="t-role">Operating Committee Leader <span class="t-org">&middot; Columbia Organization of Rising Entrepreneurs</span></span><span class="t-date">Sep 2025&ndash;May 2026</span></div>
+                </li>
+                <li>
                     <div class="t-top"><span class="t-role">Technology Intern <span class="t-org">&middot; Keye (YC F24)</span></span><span class="t-date">2024</span></div>
                     <p>Built ML models with the founder, regression and clustering on financial data, plus the pipelines that fed them.</p>
                 </li>
@@ -63,46 +76,34 @@
             </ol>
         </section>
 
-        <section class="block" aria-labelledby="work">
-            <h2 id="work">work.</h2>
+        <section class="block" aria-labelledby="projects">
+            <h2 id="projects">projects.</h2>
             <ol class="work">
+                <li>
+                    <a href="https://www.getblitz.pro/" target="_blank" rel="noopener noreferrer">
+                        <span class="mark" aria-hidden="true">B</span>
+                        <span class="w-text"><span class="w-title">Blitz <span class="arrow">&nearr;</span></span><span class="w-desc">getblitz.pro</span></span>
+                    </a>
+                </li>
+                <li>
+                    <div class="w-item">
+                        <span class="mark" aria-hidden="true">$</span>
+                        <span class="w-text"><span class="w-title">Cash Cash</span><span class="w-desc">Sports betting for high schoolers.</span></span>
+                    </div>
+                </li>
                 <li>
                     <a href="https://draftiq.app/" target="_blank" rel="noopener noreferrer">
                         <img src="logo.jpeg" alt="" width="40" height="40">
                         <span class="w-text"><span class="w-title">DraftIQ <span class="arrow">&nearr;</span></span><span class="w-desc">Trade athletes like assets. Dynamic pricing with liquidity built in, on a real-time backend.</span></span>
                     </a>
                 </li>
-                <li>
-                    <a href="https://apps.apple.com/us/app/poll-it/id6748803572" target="_blank" rel="noopener noreferrer">
-                        <img src="pollit.png" alt="" width="40" height="40">
-                        <span class="w-text"><span class="w-title">Poll.It <span class="arrow">&nearr;</span></span><span class="w-desc">News turned into swipeable cards with an NLP pipeline. Grew to 1M+ views, all organic.</span></span>
-                    </a>
-                </li>
-                <li>
-                    <a href="https://www.creativemachineslab.com/" target="_blank" rel="noopener noreferrer">
-                        <img src="celogo.jpeg" alt="" width="40" height="40">
-                        <span class="w-text"><span class="w-title">Waste-sorting robot <span class="arrow">&nearr;</span></span><span class="w-desc">Vision-based detection and RL control at the Creative Machines Lab.</span></span>
-                    </a>
-                </li>
             </ol>
-
-            <div class="boxscore" aria-label="Poll.It first month">
-                <p class="bs-label">poll.it, month one</p>
-                <div class="bs-row">
-                    <div><span class="bs-num">55K</span><span class="bs-key">followers</span></div>
-                    <div><span class="bs-num">1M+</span><span class="bs-key">views</span></div>
-                    <div><span class="bs-num">100%</span><span class="bs-key">organic</span></div>
-                </div>
-            </div>
         </section>
 
-        <section class="block" aria-labelledby="off">
-            <h2 id="off">off the court.</h2>
+        <section class="block" aria-labelledby="axioms">
+            <h2 id="axioms">axioms.</h2>
             <ul class="bullets">
-                <li>I watch way too much sports, which is how DraftIQ started.</li>
-                <li>I think about everything as a prediction market, including this website.</li>
-                <li>I speak English and Hindi, and enough Spanish to get by.</li>
-                <li>I write Python, Swift, Java, SQL and R, roughly in that order of how often.</li>
+                <li>life is an optimization problem. optimize for happiness, and find the equilibrium where everything else balances out.</li>
             </ul>
         </section>
 
@@ -120,13 +121,13 @@
             <p class="contact"><a href="mailto:arora.rahul@columbia.edu">arora.rahul@columbia.edu</a></p>
             <p class="links">
                 <a href="https://github.com/rarora2025" target="_blank" rel="noopener noreferrer">github</a>
-                <a href="https://www.linkedin.com/in/rahul-arora-114540219/" target="_blank" rel="noopener noreferrer">linkedin</a>
+                <a href="https://www.linkedin.com/in/rarora2029/" target="_blank" rel="noopener noreferrer">linkedin</a>
                 <a href="https://x.com/rahulsarora" target="_blank" rel="noopener noreferrer">x</a>
             </p>
         </section>
 
         <footer class="foot">
-            <p>Columbia CS &middot; CORE committee lead &middot; Almaworks &middot; CDSS</p>
+            <p>Columbia CS &middot; CORE board &middot; Almaworks &middot; CDSS</p>
         </footer>
     </main>
     <script src="main.js"></script>
