@@ -271,19 +271,6 @@ h2 {
     font-size: 12px;
 }
 
-.live-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--court);
-    animation: pulse 2.4s ease-in-out infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--court) 45%, transparent); }
-    50% { box-shadow: 0 0 0 5px transparent; }
-}
-
 .xp-org { display: block; color: var(--soft); font-size: 15px; }
 .xp p { color: var(--soft); font-size: 15px; margin-top: 4px; }
 
@@ -533,5 +520,4 @@ h2 {
 
 
 @media (prefers-reduced-motion: reduce) {
-    .live-dot { animation: none; }
 }
