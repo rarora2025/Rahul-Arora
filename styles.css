@@ -513,7 +513,7 @@ h2 {
 .w-desc { color: var(--soft); font-size: 15px; }
 
 /* Inline logo links inside a description, e.g. App Store and TikTok */
-.work .chip-link {
+.chip-link {
     display: inline-flex;
     align-items: center;
     gap: 5px;
@@ -529,7 +529,7 @@ h2 {
     vertical-align: 1px;
     transition: border-color .15s ease, transform .15s ease;
 }
-.work .chip-link:hover { border-color: var(--ink); transform: translateY(-1px); background: var(--card); }
+.chip-link:hover { border-color: var(--ink); transform: translateY(-1px); background: var(--card); }
 .chip-icon {
     display: grid;
     place-items: center;
@@ -540,6 +540,13 @@ h2 {
 }
 .chip-icon.appstore { background: linear-gradient(180deg, #19c3fb, #1d6ff2); }
 .chip-icon.tiktok { background: #000; }
+.chip-icon.crest { background: #fff; border: 1px solid var(--line); overflow: hidden; }
+.chip-icon img { width: 100%; height: 100%; object-fit: cover; }
+.intro .chip-link { font-size: .92em; vertical-align: .08em; }
+
+/* Project favicon over a letter fallback */
+.mark.fav { position: relative; overflow: hidden; }
+.work .mark.fav img { position: absolute; inset: 0; width: 100%; height: 100%; padding: 6px; border-radius: 0; object-fit: contain; background: #fff; }
 
 .arrow {
     display: inline-block;

@@ -120,11 +120,25 @@
 
     // Intro, word by word, starting once the name has landed
     var intro = document.querySelector('.intro');
-    var words = intro.textContent.trim().split(/\s+/);
-    intro.setAttribute('aria-label', intro.textContent.trim());
-    intro.innerHTML = words.map(function (w, i) {
-        return '<span class="w" aria-hidden="true" style="--d:' + (700 + i * 55) + 'ms">' + w + '</span>';
-    }).join(' ');
+    // Split text into word spans but keep inline elements (like the Columbia pill) whole
+    var n = 0, frag = document.createDocumentFragment();
+    function wordSpan(child) {
+        var s = document.createElement('span');
+        s.className = 'w';
+        s.style.setProperty('--d', (700 + n++ * 55) + 'ms');
+        s.appendChild(child);
+        return s;
+    }
+    Array.prototype.slice.call(intro.childNodes).forEach(function (node) {
+        if (node.nodeType !== 3) { frag.appendChild(wordSpan(node)); return; }
+        node.textContent.split(/(\s+)/).forEach(function (part) {
+            if (!part) return;
+            if (/^\s+$/.test(part)) frag.appendChild(document.createTextNode(' '));
+            else frag.appendChild(wordSpan(document.createTextNode(part)));
+        });
+    });
+    intro.textContent = '';
+    intro.appendChild(frag);
     requestAnimationFrame(function () {
         requestAnimationFrame(function () { intro.classList.add('in'); });
     });
