@@ -189,7 +189,7 @@ h2 {
     gap: 8px;
     padding: 4px 11px 4px 4px;
     border: 1px solid var(--line);
-    border-radius: 999px;
+    border-radius: 0;
     color: var(--soft);
     font-family: var(--mono);
     font-size: 11px;
@@ -203,7 +203,7 @@ h2 {
     place-items: center;
     width: 20px;
     height: 20px;
-    border-radius: 999px;
+    border-radius: 0;
     background: #0a66c2;
     color: #fff;
     font-family: var(--sans, inherit);
