@@ -231,6 +231,8 @@ h2 {
 .li-spin { transform-origin: 50% 50%; }
 .li-sync.in .li-spin { animation: li-turn 1.1s cubic-bezier(.6,0,.3,1) .5s 2; }
 .li-sync:hover { color: var(--ink); border-color: #0a66c2; background: color-mix(in srgb, #0a66c2 6%, transparent); }
+.li-sync.gh .li-badge { background: #181717; }
+.li-sync.gh:hover { border-color: var(--ink); background: color-mix(in srgb, var(--ink) 5%, transparent); }
 .li-sync:hover .li-spin { animation: li-turn .9s cubic-bezier(.6,0,.3,1) infinite; }
 
 @keyframes li-turn { to { transform: rotate(360deg); } }
@@ -460,7 +462,7 @@ h2 {
 
 .work li { counter-increment: w; }
 
-.work a, .work .w-item {
+.work > li > a, .work .w-item {
     display: flex;
     align-items: flex-start;
     gap: 14px;
@@ -471,7 +473,7 @@ h2 {
     transition: background-color .15s ease;
 }
 
-.work a::before, .work .w-item::before {
+.work > li > a::before, .work .w-item::before {
     content: counter(w, decimal-leading-zero);
     padding-top: 2px;
     width: 20px;
@@ -481,7 +483,7 @@ h2 {
     font-size: 12px;
 }
 
-.work a:hover { background: var(--card); }
+.work > li > a:hover { background: var(--card); }
 
 .mark {
     display: grid;
@@ -510,6 +512,35 @@ h2 {
 .w-title { font-weight: 600; }
 .w-desc { color: var(--soft); font-size: 15px; }
 
+/* Inline logo links inside a description, e.g. App Store and TikTok */
+.work .chip-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin: 0 1px;
+    padding: 1px 8px 1px 2px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--card);
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    vertical-align: 1px;
+    transition: border-color .15s ease, transform .15s ease;
+}
+.work .chip-link:hover { border-color: var(--ink); transform: translateY(-1px); background: var(--card); }
+.chip-icon {
+    display: grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    color: #fff;
+}
+.chip-icon.appstore { background: linear-gradient(180deg, #19c3fb, #1d6ff2); }
+.chip-icon.tiktok { background: #000; }
+
 .arrow {
     display: inline-block;
     color: var(--faint);
@@ -517,7 +548,7 @@ h2 {
     transition: transform .15s ease, color .15s ease;
 }
 
-.work a:hover .arrow { color: var(--court); transform: translate(2px, -2px); }
+.work > li > a:hover .arrow { color: var(--court); transform: translate(2px, -2px); }
 
 .bullets { margin: 0; padding-left: 18px; }
 .bullets li { padding-left: 4px; margin-bottom: 6px; }
