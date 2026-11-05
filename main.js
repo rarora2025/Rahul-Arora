@@ -1,14 +1,34 @@
-// now / prev toggle
-document.querySelectorAll('.toggle button').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-        document.querySelectorAll('.toggle button').forEach(function (b) {
-            b.setAttribute('aria-selected', String(b === btn));
-        });
-        document.querySelectorAll('.timeline').forEach(function (panel) {
-            panel.hidden = panel.dataset.panel !== btn.dataset.tab;
+// now / prev toggle: the pill slides to the chosen tab and that list replays its reveal
+(function () {
+    var buttons = Array.prototype.slice.call(document.querySelectorAll('.toggle button'));
+    var pill = document.querySelector('.toggle-pill');
+
+    function movePill(btn) {
+        pill.style.setProperty('--w', btn.offsetWidth + 'px');
+        pill.style.setProperty('--x', (btn.offsetLeft - 3) + 'px');
+    }
+
+    buttons.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            buttons.forEach(function (b) { b.setAttribute('aria-selected', String(b === btn)); });
+            movePill(btn);
+            document.querySelectorAll('.xps').forEach(function (panel) {
+                var show = panel.dataset.panel === btn.dataset.tab;
+                panel.hidden = !show;
+                if (!show) return;
+                panel.querySelectorAll('.rv').forEach(function (el, i) {
+                    el.classList.remove('in');
+                    void el.offsetWidth;
+                    el.style.setProperty('--d', i * 70 + 'ms');
+                    el.classList.add('in');
+                });
+            });
         });
     });
-});
+
+    movePill(buttons[0]);
+    if (document.fonts) document.fonts.ready.then(function () { movePill(document.querySelector('.toggle [aria-selected="true"]')); });
+})();
 
 // Name animation. Letters rise in one after another, then react to the cursor:
 // the letters nearest it thin out, lift and pick up the accent color, and ease back
@@ -90,4 +110,70 @@ document.querySelectorAll('.toggle button').forEach(function (btn) {
         sweep = { t0: performance.now(), ms: 1600, x0: r.left - RADIUS, x1: r.right + RADIUS, y: r.top + r.height / 2 };
         start();
     }, introMs);
+})();
+
+// Slow text reveals across the page. Section headings type themselves out, the intro
+// resolves word by word, and everything else fades up out of a blur as it scrolls in.
+(function () {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!('IntersectionObserver' in window)) return;
+
+    // Intro, word by word, starting once the name has landed
+    var intro = document.querySelector('.intro');
+    var words = intro.textContent.trim().split(/\s+/);
+    intro.setAttribute('aria-label', intro.textContent.trim());
+    intro.innerHTML = words.map(function (w, i) {
+        return '<span class="w" aria-hidden="true" style="--d:' + (700 + i * 55) + 'ms">' + w + '</span>';
+    }).join(' ');
+    requestAnimationFrame(function () {
+        requestAnimationFrame(function () { intro.classList.add('in'); });
+    });
+
+    // Headings: typewriter with a caret that leaves when it's done
+    var headings = Array.prototype.slice.call(document.querySelectorAll('.block h2'));
+    headings.forEach(function (h) {
+        h.dataset.text = h.textContent;
+        h.setAttribute('aria-label', h.textContent);
+        h.textContent = '';
+        h.style.minHeight = '1.2em';
+    });
+
+    function type(h) {
+        var text = h.dataset.text, i = 0;
+        h.classList.add('typing');
+        (function step() {
+            i++;
+            h.textContent = text.slice(0, i);
+            if (i < text.length) setTimeout(step, 70 + Math.random() * 60);
+            else setTimeout(function () { h.classList.remove('typing'); }, 900);
+        })();
+    }
+
+    // Everything else
+    var groups = [
+        '.site-preview', '.ticker', '.xps:not([hidden]) .xp', '.xps[hidden] .xp', '.work li',
+        '.bullets li', '.market', '.contact', '.links', '.foot'
+    ];
+    var items = [];
+    groups.forEach(function (sel) {
+        document.querySelectorAll(sel).forEach(function (el, i) {
+            el.classList.add('rv');
+            el.style.setProperty('--d', (sel === '.site-preview' ? 1400 : i * 90) + 'ms');
+            items.push(el);
+        });
+    });
+
+    var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+            if (!e.isIntersecting) return;
+            io.unobserve(e.target);
+            if (e.target.tagName === 'H2') type(e.target);
+            else e.target.classList.add('in');
+        });
+    }, { rootMargin: '0px 0px -10% 0px' });
+
+    headings.concat(items).forEach(function (el) { io.observe(el); });
+
+    // Hidden "prev" items never intersect; mark them so the toggle can replay them
+    document.querySelectorAll('.xps[hidden] .xp').forEach(function (el) { el.classList.add('in'); });
 })();
