@@ -572,7 +572,7 @@ h2 {
 }
 .tweets::-webkit-scrollbar { display: none; }
 
-.tweet { flex: 0 0 min(300px, 82%); scroll-snap-align: start; }
+.tweet { flex: 0 0 calc(50% - 7px); scroll-snap-align: start; }
 
 .tweet a {
     display: flex;
@@ -597,11 +597,12 @@ h2 {
 .t-x svg { width: 14px; height: 14px; }
 .t-body { font-size: 15px; line-height: 1.5; }
 
+.t-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+
 .follow-x {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    margin-top: 14px;
     padding: 9px 14px;
     background: var(--ink);
     color: var(--paper);
@@ -611,6 +612,9 @@ h2 {
     transition: transform .15s ease, opacity .15s ease;
 }
 .follow-x:hover { transform: translateY(-1px); opacity: .88; }
+.follow-x.mail { background: transparent; color: var(--ink); border: 1px solid var(--ink); padding: 8px 13px; }
+.follow-x.mail:hover { opacity: 1; background: color-mix(in srgb, var(--ink) 6%, transparent); }
+.t-quote { display: block; margin-top: 8px; color: var(--soft); font-size: 14px; }
 
 /* Prediction market card */
 .market {
@@ -657,6 +661,7 @@ h2 {
 
 @media (max-width: 520px) {
     .li-text { display: none; }
+    .tweet { flex-basis: 84%; }
     .li-sync { padding-right: 9px; }
     .hero { padding-top: 72px; }
     .intro { font-size: 17px; }
