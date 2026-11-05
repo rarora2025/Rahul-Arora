@@ -171,7 +171,8 @@ h1, h2, p { margin: 0; }
 }
 
 /* Sections */
-.block { padding: 48px 0 8px; }
+/* One rhythm for every section */
+.block { padding: 64px 0 0; }
 
 h2 {
     font-size: 15px;
@@ -333,7 +334,6 @@ h2 {
 .xp p { color: var(--soft); font-size: 15px; margin-top: 4px; }
 
 /* Recap gallery: a sideways strip of photos with captions, oldest first */
-.recap { padding-top: 40px; }
 
 .g-nav { margin-left: auto; display: flex; gap: 6px; }
 
@@ -356,7 +356,7 @@ h2 {
     gap: 18px;
     width: 100vw;
     margin: 0 0 0 calc(50% - 50vw);
-    padding: 8px 24px 24px;
+    padding: 8px 24px 12px;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     scroll-padding: 0 24px;
@@ -565,7 +565,7 @@ h2 {
     display: flex;
     gap: 14px;
     margin: 0 -2px;
-    padding: 2px 2px 12px;
+    padding: 2px 2px 4px;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     scrollbar-width: none;
@@ -612,6 +612,23 @@ h2 {
     transition: transform .15s ease, opacity .15s ease;
 }
 .follow-x:hover { transform: translateY(-1px); opacity: .88; }
+.follow-x.sm { margin-left: auto; padding: 6px 11px; font-size: 11px; gap: 7px; }
+.email-big {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 12px;
+    padding: 18px 20px;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: var(--mono);
+    font-size: 15px;
+    text-decoration: none;
+    transition: transform .15s ease, opacity .15s ease;
+}
+.email-big .arrow { margin-left: auto; color: inherit; transition: transform .2s ease; }
+.email-big:hover { transform: translateY(-1px); opacity: .9; }
+.email-big:hover .arrow { transform: translateX(4px); }
 .follow-x.mail { background: transparent; color: var(--ink); border: 1px solid var(--ink); padding: 8px 13px; }
 .follow-x.mail:hover { opacity: 1; background: color-mix(in srgb, var(--ink) 6%, transparent); }
 .t-quote { display: block; margin-top: 8px; color: var(--soft); font-size: 14px; }
@@ -622,7 +639,6 @@ h2 {
     border-radius: 12px;
     background: var(--card);
     border: 1px solid var(--line);
-    max-width: 420px;
 }
 
 .m-q { font-weight: 500; }
@@ -673,3 +689,6 @@ h2 {
 @media (prefers-reduced-motion: reduce) {
     .li-spin { animation: none !important; }
 }
+
+/* Lists whose rows carry their own bottom padding: pull the section edge back up so gaps match */
+.work, .xps { margin-bottom: -14px; }
