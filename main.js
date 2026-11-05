@@ -207,15 +207,14 @@
     });
 })();
 
-// Play-money prediction market. An LMSR market maker prices Yes/No, background traders
-// keep it moving (pulled back toward ~94%), visitors trade under their own name, and the
-// whole market (price history, volume, trades) is saved in the browser so it persists.
+// Play-money prediction market, run entirely by the visitor. An LMSR market maker prices
+// long (Yes) and short (No). Each visitor starts with a fresh market at 94% and $0 volume,
+// moves it with their own trades, and it's saved in their browser.
 (function () {
     var root = document.getElementById('pm');
-    var modal = document.getElementById('pm-modal');
-    if (!root || !modal) return;
+    if (!root) return;
 
-    var B = 150, ANCHOR = 0.94, KEY = 'pm-rahul-v2', MAXPTS = 96, HOUR = 3600e3;
+    var B = 250, START = 0.94, KEY = 'pm-rahul-v3', MAXPTS = 120;
     function price(q) { var a = Math.exp(q.y / B), c = Math.exp(q.n / B); return a / (a + c); }
 
     // Shares bought by spending x on a side: cost(q') - cost(q) = x
@@ -225,30 +224,23 @@
         var d = B * (Math.log(Math.exp(x / B) * (ea + ec) - ec) - (a - m));
         var out = { y: qs.y, n: qs.n };
         out[side === 'yes' ? 'y' : 'n'] += d;
-        return { q: out, shares: d };
+        return out;
     }
 
-    // Load the saved market, or seed a fresh one with a believable 24h history
     var st = null;
     try { st = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
     if (!st || !st.hist || !st.hist.length) {
-        var now = Date.now(), p = 0.9 + Math.random() * 0.05, hist = [];
-        for (var i = 0; i < 48; i++) {
-            p += (ANCHOR - p) * 0.15 + (Math.random() - 0.5) * 0.03;
-            p = Math.min(0.98, Math.max(0.82, p));
-            hist.push({ t: now - (48 - i) * HOUR / 2, p: p });
-        }
-        var last = hist[hist.length - 1].p;
-        st = { q: { y: B * Math.log(last / (1 - last)), n: 0 }, vol: 1800 + Math.round(Math.random() * 900), hist: hist, pos: { yes: 0, no: 0 }, name: '' };
+        st = { q: { y: B * Math.log(START / (1 - START)), n: 0 }, vol: 0, hist: [{ t: Date.now(), p: START }] };
     }
     function save() { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} }
 
     var $ = function (sel) { return root.querySelector(sel); };
-    var line = $('[data-line]'), area = $('[data-area]'), posEl = $('[data-pos]');
-    var plot = $('[data-plot]'), cross = $('[data-cross]'), dot = $('[data-dot]'), tip = $('[data-tip]');
+    var line = $('[data-line]'), area = $('[data-area]'), plot = $('[data-plot]');
+    var cross = $('[data-cross]'), dot = $('[data-dot]'), tip = $('[data-tip]');
+    var slider = $('[data-amt]'), amtOut = $('[data-amt-out]'), pctEl = $('[data-pct]');
 
     function cents(v) { return Math.round(v * 100) + '¢'; }
-    function money(v) { return '$' + Math.round(v).toLocaleString('en-US'); }
+    function pct(v) { return Math.round(v * 100) + '%'; }
     function ago(t) {
         var s = (Date.now() - t) / 1000;
         if (s < 60) return 'just now';
@@ -257,88 +249,90 @@
         return Math.round(s / 86400) + 'd ago';
     }
 
+    // Chart: a step for each trade, the last one running to "now". A fresh market is a flat line.
     var pts = [];
     function draw() {
-        var ps = st.hist.map(function (h) { return h.p; });
-        var lo = Math.min.apply(null, ps) - 0.02, hi = Math.max.apply(null, ps) + 0.02;
-        pts = ps.map(function (v, i) { return [(i / (ps.length - 1)) * 300, 70 - ((v - lo) / (hi - lo)) * 66]; });
-        var d = pts.map(function (pt, i) { return (i ? 'L' : 'M') + pt[0].toFixed(1) + ' ' + pt[1].toFixed(1); }).join(' ');
+        var ps = st.hist.map(function (h) { return h.p; }), n = ps.length;
+        var lo = Math.min.apply(null, ps) - 0.03, hi = Math.max.apply(null, ps) + 0.03;
+        pts = ps.map(function (v, i) { return [(i / n) * 300, 70 - ((v - lo) / (hi - lo)) * 66]; });
+        var d = 'M0 ' + pts[0][1].toFixed(1);
+        for (var i = 1; i < n; i++) d += ' H' + pts[i][0].toFixed(1) + ' V' + pts[i][1].toFixed(1);
+        d += ' H300';
         line.setAttribute('d', d);
-        area.setAttribute('d', d + ' L300 72 L0 72 Z');
-        $('[data-since]').textContent = ago(st.hist[0].t);
+        area.setAttribute('d', d + ' V72 H0 Z');
+        $('[data-since]').textContent = n > 1 ? ago(st.hist[0].t) : 'start';
     }
 
     function render() {
         var py = price(st.q);
-        document.querySelectorAll('[data-pct]').forEach(function (el) { el.textContent = Math.round(py * 100) + '%'; });
-        document.querySelectorAll('[data-yes]').forEach(function (el) { el.textContent = cents(py); });
-        document.querySelectorAll('[data-no]').forEach(function (el) { el.textContent = cents(1 - py); });
-        var ch = (py - st.hist[0].p) * 100, chEl = $('[data-change]');
+        pctEl.textContent = pct(py);
+        $('[data-yes]').textContent = cents(py);
+        $('[data-no]').textContent = cents(1 - py);
+        var ch = (py - START) * 100, chEl = $('[data-change]');
         chEl.textContent = (ch >= 0 ? '+' : '') + ch.toFixed(1) + '%';
         chEl.classList.toggle('up', ch >= 0);
         chEl.classList.toggle('down', ch < 0);
-        $('[data-vol]').textContent = money(st.vol);
-        if (st.pos.yes || st.pos.no) {
-            var parts = [];
-            if (st.pos.yes) parts.push(st.pos.yes.toFixed(1) + ' Yes');
-            if (st.pos.no) parts.push(st.pos.no.toFixed(1) + ' No');
-            posEl.hidden = false;
-            posEl.textContent = (st.name || 'you') + ' holds ' + parts.join(' + ') + ' · worth $' + (st.pos.yes * py + st.pos.no * (1 - py)).toFixed(2);
-        }
+        $('[data-vol]').textContent = '$' + Math.round(st.vol).toLocaleString('en-US');
         draw();
-        if (hoverI != null) hover(hoverI);
     }
 
-    function trade(side, x, who) {
-        var r = apply(st.q, side, x);
-        st.q = r.q;
-        st.vol += x;
-        st.hist.push({ t: Date.now(), p: price(st.q), w: who, s: side, a: Math.round(x) });
-        if (st.hist.length > MAXPTS) st.hist.shift();
-        save();
-        render();
-        return r.shares;
+    function amount() { return Number(slider.value) || 0; }
+    function syncSlider() {
+        amtOut.textContent = '$' + amount();
+        slider.style.setProperty('--fill', ((amount() - slider.min) / (slider.max - slider.min) * 100) + '%');
+    }
+    slider.addEventListener('input', syncSlider);
+
+    // Floating price change that rises off the end of the line
+    function float(before, after) {
+        root.querySelectorAll('.pm-float').forEach(function (old) { old.remove(); });
+        var el = document.createElement('span'), diff = (after - before) * 100;
+        el.className = 'pm-float ' + (diff >= 0 ? 'up' : 'down');
+        el.textContent = (diff >= 0 ? '+ ' : '− ') + Math.abs(diff).toFixed(1) + '% → ' + pct(after);
+        el.style.top = (pts[pts.length - 1][1] / 72 * plot.clientHeight) + 'px';
+        plot.appendChild(el);
+        el.addEventListener('animationend', function () { el.remove(); });
+        pctEl.classList.remove('bump');
+        void pctEl.offsetWidth;
+        pctEl.classList.add('bump');
     }
 
-    // Background traders: small trades that lean back toward the anchor
-    var NAMES = ['anon', 'anon', 'a recruiter', 'Priya', 'Jake', 'a classmate', 'Maya', 'Leo', 'a founder', 'Sam'];
-    function bot() {
-        var py = price(st.q), side = Math.random() < 0.5 + (ANCHOR - py) * 12 ? 'yes' : 'no';
-        if (py > 0.985) side = 'no';
-        if (py < 0.82) side = 'yes';
-        // Spend scales with the side's price so cheap No shares don't swing the market
-        trade(side, Math.max(1, (1 + Math.random() * 39) * (side === 'yes' ? py : (1 - py) * 3)), NAMES[Math.floor(Math.random() * NAMES.length)]);
-        setTimeout(bot, 4000 + Math.random() * 5000);
-    }
-    setTimeout(bot, 2500);
+    root.querySelectorAll('.m-row button').forEach(function (b) {
+        b.addEventListener('click', function () {
+            var x = amount(), before = price(st.q);
+            if (!x) return;
+            st.q = apply(st.q, b.dataset.side, x);
+            st.vol += x;
+            st.hist.push({ t: Date.now(), p: price(st.q), s: b.dataset.side, a: x });
+            if (st.hist.length > MAXPTS) st.hist.splice(1, 1);
+            save();
+            render();
+            float(before, price(st.q));
+        });
+    });
 
     // Hover (or drag on touch) to read the price at any point
-    var hoverI = null;
     function hover(i) {
-        hoverI = i;
-        var h = st.hist[i], pt = pts[i], w = plot.clientWidth, x = pt[0] / 300 * w, y = pt[1] / 72 * plot.clientHeight;
-        cross.setAttribute('x1', pt[0]); cross.setAttribute('x2', pt[0]);
+        var h = st.hist[i], n = st.hist.length, mid = (i + 0.5) / n * 300, w = plot.clientWidth, x = mid / 300 * w, pt = [mid, pts[i][1]];
+        cross.setAttribute('x1', mid); cross.setAttribute('x2', mid); cross.removeAttribute('hidden');
         dot.hidden = tip.hidden = false;
-        cross.removeAttribute('hidden');
-        dot.style.left = x + 'px'; dot.style.top = y + 'px';
-        tip.innerHTML = '';
-        var top = document.createElement('div');
-        top.innerHTML = '<b></b> · ';
-        top.firstChild.textContent = Math.round(h.p * 100) + '%';
-        top.appendChild(document.createTextNode(ago(h.t)));
+        dot.style.left = x + 'px'; dot.style.top = (pt[1] / 72 * plot.clientHeight) + 'px';
+        tip.textContent = '';
+        var top = document.createElement('div'), b = document.createElement('b');
+        b.textContent = pct(h.p);
+        top.appendChild(b);
+        top.appendChild(document.createTextNode(' · ' + ago(h.t)));
         tip.appendChild(top);
-        if (h.w) {
-            var who = document.createElement('small');
-            who.textContent = h.w + ' bought $' + h.a + ' ' + (h.s === 'yes' ? 'Yes' : 'No');
-            tip.appendChild(who);
-        }
+        var sub = document.createElement('small');
+        sub.textContent = h.s ? (h.s === 'yes' ? 'long' : 'short') + ' $' + h.a : 'market opened';
+        tip.appendChild(sub);
         var half = tip.offsetWidth / 2;
         tip.style.left = Math.min(w - half, Math.max(half, x)) + 'px';
     }
-    function unhover() { hoverI = null; cross.setAttribute('hidden', ''); dot.hidden = tip.hidden = true; }
+    function unhover() { cross.setAttribute('hidden', ''); dot.hidden = tip.hidden = true; }
     plot.addEventListener('pointermove', function (e) {
-        var r = plot.getBoundingClientRect(), f = (e.clientX - r.left) / r.width;
-        hover(Math.max(0, Math.min(st.hist.length - 1, Math.round(f * (st.hist.length - 1)))));
+        var r = plot.getBoundingClientRect(), n = st.hist.length;
+        hover(Math.max(0, Math.min(n - 1, Math.floor((e.clientX - r.left) / r.width * n))));
     });
     plot.addEventListener('pointerleave', unhover);
     plot.addEventListener('pointercancel', unhover);
@@ -351,52 +345,6 @@
         infoBtn.setAttribute('aria-expanded', String(open));
     });
 
-    // Trade modal
-    var side = 'yes', amt = modal.querySelector('[data-amt]'), go = modal.querySelector('[data-go]'), nameIn = modal.querySelector('[data-name]');
-    nameIn.value = st.name || '';
-    function pick(s) {
-        side = s;
-        modal.querySelectorAll('.pm-side').forEach(function (b) { b.setAttribute('aria-checked', String(b.dataset.pick === s)); });
-        go.classList.toggle('no', s === 'no');
-        quote();
-    }
-    function amount() { return Math.min(1000, Math.max(0, Number(amt.value) || 0)); }
-    function quote() {
-        var x = amount(), set = function (k, v) { modal.querySelector('[data-q-' + k + ']').textContent = v; };
-        if (!x) { ['avg', 'shares', 'pay', 'after'].forEach(function (k) { set(k, '–'); }); go.disabled = true; return; }
-        var r = apply(st.q, side, x), after = price(r.q);
-        set('avg', cents(x / r.shares));
-        set('shares', r.shares.toFixed(1));
-        set('pay', '$' + r.shares.toFixed(2));
-        set('after', Math.round((side === 'yes' ? after : 1 - after) * 100) + '%');
-        go.disabled = false;
-        go.textContent = 'Buy ' + (side === 'yes' ? 'Yes' : 'No') + ' for $' + Math.round(x);
-    }
-
-    root.querySelectorAll('.m-row button').forEach(function (b) {
-        b.addEventListener('click', function () {
-            pick(b.dataset.side);
-            if (modal.showModal) modal.showModal(); else modal.setAttribute('open', '');
-        });
-    });
-    modal.querySelectorAll('.pm-side').forEach(function (b) { b.addEventListener('click', function () { pick(b.dataset.pick); }); });
-    modal.querySelectorAll('[data-add]').forEach(function (b) {
-        b.addEventListener('click', function () { amt.value = Math.min(1000, amount() + Number(b.dataset.add)); quote(); });
-    });
-    amt.addEventListener('input', quote);
-    modal.addEventListener('click', function (e) { if (e.target === modal) modal.close(); });
-    setInterval(function () { if (modal.open) quote(); }, 1000);
-
-    go.addEventListener('click', function () {
-        var x = amount();
-        if (!x) return;
-        st.name = nameIn.value.trim().slice(0, 20);
-        var shares = trade(side, x, st.name || 'anon');
-        st.pos[side] += shares;
-        save();
-        render();
-        modal.close();
-    });
-
+    syncSlider();
     render();
 })();

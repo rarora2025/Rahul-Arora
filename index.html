@@ -199,12 +199,12 @@
             <h2 id="email">my contact.</h2>
 
             <a class="email-card" href="mailto:arora.rahul@columbia.edu">
-                <span class="e-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span>
+                <img class="e-pic" src="contact.jpg" alt="" width="40" height="40">
                 <span class="e-text"><span class="e-addr">arora.rahul@columbia.edu</span></span>
                 <span class="arrow" aria-hidden="true">&rarr;</span>
             </a>
 
-            <!-- Play-money prediction market. Pricing and the background traders live in main.js -->
+            <!-- Play-money prediction market. Pricing and trading live in main.js -->
             <div class="market" id="pm">
                 <div class="pm-top">
                     <p class="m-q">Will Rahul reply to your email within 24 hours?</p>
@@ -225,41 +225,20 @@
                     <span class="pm-tip" data-tip hidden></span>
                 </div>
                 <div class="pm-axis" aria-hidden="true"><span data-since>24h ago</span><span>now</span></div>
-                <div class="m-row">
-                    <button type="button" class="m-yes" data-side="yes">Buy Yes <span data-yes>94&cent;</span></button>
-                    <button type="button" class="m-no" data-side="no">Buy No <span data-no>6&cent;</span></button>
+                <div class="pm-trade">
+                    <label class="pm-amt" for="pm-amt"><span>Amount</span><b data-amt-out>$25</b></label>
+                    <input class="pm-slider" id="pm-amt" type="range" min="1" max="250" step="1" value="25" data-amt>
+                    <div class="m-row">
+                        <button type="button" class="m-yes" data-side="yes"><span>Long</span><span data-yes>94&cent;</span></button>
+                        <button type="button" class="m-no" data-side="no"><span>Short</span><span data-no>6&cent;</span></button>
+                    </div>
                 </div>
-                <p class="pm-pos" data-pos hidden></p>
                 <div class="pm-info" id="pm-info" hidden>
-                    <p>It&rsquo;s a play-money market, so no real money moves. Prices work like odds, so 94&cent; means the market puts a 94% chance on me replying within a day.</p>
-                    <p>An automated market maker (LMSR) sets every price. Each trade nudges it, so buying Yes pushes Yes up and No down. Bots trade in the background to keep it moving.</p>
-                    <p>A Yes share pays $1 if I reply in time. A No share pays $1 if I don&rsquo;t.</p>
+                    <p>It&rsquo;s a play-money market that starts fresh for you, with $0 volume. Prices work like odds, so 94&cent; means a 94% chance I reply within a day.</p>
+                    <p>An automated market maker (LMSR) sets the price. Pick an amount with the slider, then go long (Yes) or short (No). Every trade moves the price, and bigger trades move it more.</p>
+                    <p>A long share pays $1 if I reply in time. A short share pays $1 if I don&rsquo;t.</p>
                 </div>
             </div>
-
-            <dialog class="pm-modal" id="pm-modal">
-                <form method="dialog" class="pm-form">
-                    <div class="pm-m-head">
-                        <span class="pm-m-title">Trade</span>
-                        <button value="cancel" class="pm-x" aria-label="Close">&times;</button>
-                    </div>
-                    <p class="pm-m-q">Will Rahul reply to your email within 24 hours?</p>
-                    <div class="pm-sides" role="radiogroup" aria-label="Side">
-                        <button type="button" class="pm-side yes" data-pick="yes" role="radio">Yes <span data-yes>94&cent;</span></button>
-                        <button type="button" class="pm-side no" data-pick="no" role="radio">No <span data-no>6&cent;</span></button>
-                    </div>
-                    <label class="pm-name"><span>Your name</span><input type="text" maxlength="20" placeholder="anon" autocomplete="given-name" data-name></label>
-                    <label class="pm-amt"><span>Amount</span><span class="pm-amt-in">$<input type="number" min="1" max="1000" step="1" value="10" inputmode="decimal" data-amt></span></label>
-                    <div class="pm-presets"><button type="button" data-add="1">+$1</button><button type="button" data-add="10">+$10</button><button type="button" data-add="50">+$50</button><button type="button" data-add="100">+$100</button></div>
-                    <dl class="pm-quote">
-                        <div><dt>Avg price</dt><dd data-q-avg>&ndash;</dd></div>
-                        <div><dt>Shares</dt><dd data-q-shares>&ndash;</dd></div>
-                        <div><dt>Payout if right</dt><dd data-q-pay>&ndash;</dd></div>
-                        <div><dt>Price after</dt><dd data-q-after>&ndash;</dd></div>
-                    </dl>
-                    <button type="button" class="pm-go" data-go>Place trade</button>
-                </form>
-            </dialog>
         </section>
     </main>
     <script src="main.js"></script>
