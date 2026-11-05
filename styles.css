@@ -311,19 +311,25 @@ h2 {
     gap: 18px;
     width: 100vw;
     margin: 0 0 0 calc(50% - 50vw);
-    padding: 8px max(24px, calc(50vw - 296px)) 24px;
+    padding: 8px 24px 24px;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
-    scroll-padding: 0 max(24px, calc(50vw - 296px));
+    scroll-padding: 0 24px;
     scrollbar-width: none;
 }
 
 .gallery::-webkit-scrollbar { display: none; }
 
 .g-card {
-    flex: 0 0 240px;
+    flex: 0 0 224px;
     scroll-snap-align: start;
 }
+
+/* auto margins center the row when it fits and still scroll cleanly when it doesn't */
+.g-card:first-child { margin-left: auto; }
+.g-card:last-child { margin-right: auto; }
+
+.g-nav[hidden] { display: none; }
 
 .g-card figure {
     margin: 0;

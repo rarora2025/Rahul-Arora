@@ -178,9 +178,13 @@
     document.querySelectorAll('.xps[hidden] .xp').forEach(function (el) { el.classList.add('in'); });
 })();
 
-// Recap gallery arrows scroll one card at a time
+// Recap gallery arrows scroll one card at a time, and hide when every card fits
 (function () {
     var strip = document.querySelector('.gallery');
+    var nav = document.querySelector('.g-nav');
+    function fit() { nav.hidden = strip.scrollWidth <= strip.clientWidth + 1; }
+    fit();
+    window.addEventListener('resize', fit);
     document.querySelectorAll('.g-btn').forEach(function (btn) {
         btn.addEventListener('click', function () {
             var card = strip.querySelector('.g-card');
