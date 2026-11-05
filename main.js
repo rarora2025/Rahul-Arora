@@ -166,7 +166,7 @@
     // Everything else
     var groups = [
         '.site-preview', '.g-card', '.xps:not([hidden]) .xp', '.xps[hidden] .xp', '.work li',
-        '.li-sync', '.bullets li', '.market', '.contact', '.links', '.foot'
+        '.li-sync', '.tweet', '.follow-x', '.bullets li', '.market', '.contact', '.links', '.foot'
     ];
     var items = [];
     groups.forEach(function (sel) {

@@ -231,7 +231,8 @@ h2 {
 .li-spin { transform-origin: 50% 50%; }
 .li-sync.in .li-spin { animation: li-turn 1.1s cubic-bezier(.6,0,.3,1) .5s 2; }
 .li-sync:hover { color: var(--ink); border-color: #0a66c2; background: color-mix(in srgb, #0a66c2 6%, transparent); }
-.li-sync.gh .li-badge { background: #181717; }
+.li-sync.gh .li-badge, .li-sync.x .li-badge { background: #000; }
+.li-sync.x:hover { border-color: var(--ink); background: color-mix(in srgb, var(--ink) 5%, transparent); }
 .li-sync.gh:hover { border-color: var(--ink); background: color-mix(in srgb, var(--ink) 5%, transparent); }
 .li-sync:hover .li-spin { animation: li-turn .9s cubic-bezier(.6,0,.3,1) infinite; }
 
@@ -502,7 +503,7 @@ h2 {
     width: 40px;
     height: 40px;
     flex-shrink: 0;
-    border-radius: 10px;
+    border-radius: 50%;
     object-fit: cover;
     background: #fff;
     border: 1px solid var(--line);
@@ -544,9 +545,6 @@ h2 {
 .chip-icon img { width: 100%; height: 100%; object-fit: cover; }
 .intro .chip-link { font-size: .92em; vertical-align: .08em; }
 
-/* Project favicon over a letter fallback */
-.mark.fav { position: relative; overflow: hidden; }
-.work .mark.fav img { position: absolute; inset: 0; width: 100%; height: 100%; padding: 6px; border-radius: 0; object-fit: contain; background: #fff; }
 
 .arrow {
     display: inline-block;
@@ -560,6 +558,59 @@ h2 {
 .bullets { margin: 0; padding-left: 18px; }
 .bullets li { padding-left: 4px; margin-bottom: 6px; }
 .bullets li::marker { color: var(--court); }
+
+/* Posts from X, laid out as a sideways strip of cards */
+.tweets {
+    list-style: none;
+    display: flex;
+    gap: 14px;
+    margin: 0 -2px;
+    padding: 2px 2px 12px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+}
+.tweets::-webkit-scrollbar { display: none; }
+
+.tweet { flex: 0 0 min(300px, 82%); scroll-snap-align: start; }
+
+.tweet a {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    height: 100%;
+    padding: 16px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    text-decoration: none;
+    transition: border-color .2s ease, transform .2s ease;
+}
+.tweet a:hover { border-color: var(--ink); transform: translateY(-2px); }
+
+.t-head { display: flex; align-items: center; gap: 10px; }
+.t-head img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+.t-who { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+.t-name { font-weight: 600; font-size: 14px; }
+.t-handle { color: var(--faint); font-family: var(--mono); font-size: 11px; }
+.t-x { margin-left: auto; color: var(--ink); display: grid; }
+.t-x svg { width: 14px; height: 14px; }
+.t-body { font-size: 15px; line-height: 1.5; }
+
+.follow-x {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+    padding: 9px 14px;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: var(--mono);
+    font-size: 12px;
+    text-decoration: none;
+    transition: transform .15s ease, opacity .15s ease;
+}
+.follow-x:hover { transform: translateY(-1px); opacity: .88; }
 
 /* Prediction market card */
 .market {
