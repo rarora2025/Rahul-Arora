@@ -53,7 +53,8 @@ h1, h2, p { margin: 0; }
 }
 
 .name {
-    font-size: clamp(64px, 15vw, 112px);
+    font-size: clamp(40px, 13vw, 96px);
+    white-space: nowrap;
     font-weight: 800;
     letter-spacing: -0.045em;
     cursor: default;
@@ -62,7 +63,7 @@ h1, h2, p { margin: 0; }
     -webkit-user-select: none;
 }
 
-.word { display: block; white-space: nowrap; }
+.word { display: inline-block; }
 
 .l {
     display: inline-block;
