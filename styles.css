@@ -50,7 +50,7 @@ h1, h2, p { margin: 0; }
 /* Hero: the letters are physics objects, see main.js */
 .hero {
     position: relative;
-    padding: 120px 0 56px;
+    padding: 120px 0 0;
 }
 
 .name {
@@ -333,7 +333,7 @@ h2 {
 .xp p { color: var(--soft); font-size: 15px; margin-top: 4px; }
 
 /* Recap gallery: a sideways strip of photos with captions, oldest first */
-.recap { padding-top: 72px; }
+.recap { padding-top: 40px; }
 
 .g-nav { margin-left: auto; display: flex; gap: 6px; }
 
