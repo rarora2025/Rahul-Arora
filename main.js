@@ -151,7 +151,7 @@
 
     // Everything else
     var groups = [
-        '.site-preview', '.ticker', '.xps:not([hidden]) .xp', '.xps[hidden] .xp', '.work li',
+        '.site-preview', '.g-card', '.xps:not([hidden]) .xp', '.xps[hidden] .xp', '.work li',
         '.bullets li', '.market', '.contact', '.links', '.foot'
     ];
     var items = [];
@@ -176,4 +176,15 @@
 
     // Hidden "prev" items never intersect; mark them so the toggle can replay them
     document.querySelectorAll('.xps[hidden] .xp').forEach(function (el) { el.classList.add('in'); });
+})();
+
+// Recap gallery arrows scroll one card at a time
+(function () {
+    var strip = document.querySelector('.gallery');
+    document.querySelectorAll('.g-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var card = strip.querySelector('.g-card');
+            strip.scrollBy({ left: Number(btn.dataset.dir) * (card.offsetWidth + 18), behavior: 'smooth' });
+        });
+    });
 })();

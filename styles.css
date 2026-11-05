@@ -287,36 +287,86 @@ h2 {
 .xp-org { display: block; color: var(--soft); font-size: 15px; }
 .xp p { color: var(--soft); font-size: 15px; margin-top: 4px; }
 
-/* Ticker: the band that carries you from the intro into "lately." */
-.ticker {
-    width: 100vw;
-    margin: 72px 0 24px calc(50% - 50vw);
-    padding: 14px 0;
-    border-top: 1px solid var(--line);
-    border-bottom: 1px solid var(--line);
-    overflow: hidden;
-    mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
-    -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
-}
+/* Recap gallery: a sideways strip of photos with captions, oldest first */
+.recap { padding-top: 72px; }
 
-.ticker-track {
-    display: flex;
-    width: max-content;
-    animation: ticker 40s linear infinite;
-}
+.g-nav { margin-left: auto; display: flex; gap: 6px; }
 
-.ticker span {
-    padding: 0 22px;
+.g-btn {
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    background: var(--card);
     color: var(--soft);
-    font: 12px var(--mono);
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    white-space: nowrap;
+    cursor: pointer;
+    transition: color .2s ease, border-color .2s ease;
 }
 
-.ticker span::after { content: "\2197"; margin-left: 22px; color: var(--court); }
+.g-btn:hover { color: var(--court); border-color: var(--court); }
 
-@keyframes ticker { to { transform: translateX(-50%); } }
+.gallery {
+    list-style: none;
+    display: flex;
+    gap: 18px;
+    width: 100vw;
+    margin: 0 0 0 calc(50% - 50vw);
+    padding: 8px max(24px, calc(50vw - 296px)) 24px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding: 0 max(24px, calc(50vw - 296px));
+    scrollbar-width: none;
+}
+
+.gallery::-webkit-scrollbar { display: none; }
+
+.g-card {
+    flex: 0 0 240px;
+    scroll-snap-align: start;
+}
+
+.g-card figure {
+    margin: 0;
+    padding: 10px 10px 0;
+    background: var(--card);
+    border: 1px solid var(--line);
+    box-shadow: 0 10px 24px -16px rgba(0,0,0,.35);
+    transform: rotate(var(--tilt, 0deg));
+    transition: transform .3s cubic-bezier(.2, .8, .2, 1);
+}
+
+.g-card:nth-child(odd) figure { --tilt: -1.5deg; }
+.g-card:nth-child(even) figure { --tilt: 1.2deg; }
+.g-card figure:hover { transform: rotate(0) translateY(-4px); }
+
+.g-media {
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    background: var(--line);
+}
+
+.g-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.g-text {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    background: #1f9d55;
+    color: #fff;
+}
+
+.g-odds { font-size: 56px; font-weight: 800; letter-spacing: -0.04em; }
+.g-sub { font: 12px var(--mono); letter-spacing: .1em; text-transform: uppercase; opacity: .8; }
+
+.g-card figcaption {
+    padding: 10px 2px 12px;
+    color: var(--soft);
+    font: 12px/1.5 var(--mono);
+}
+
+.g-num { display: block; color: var(--court); margin-bottom: 2px; }
 
 /* Text reveal: blocks fade up out of a blur as they scroll in (see main.js) */
 .rv { opacity: 0; filter: blur(8px); transform: translateY(14px); }
@@ -472,10 +522,10 @@ h2 {
     .hero { padding-top: 72px; }
     .intro { font-size: 17px; }
     .xp-top { flex-direction: column; gap: 0; }
-    .ticker { margin-top: 56px; }
+    .g-card { flex-basis: 200px; }
 }
 
 
 @media (prefers-reduced-motion: reduce) {
-    .ticker-track, .live-dot { animation: none; }
+    .live-dot { animation: none; }
 }
