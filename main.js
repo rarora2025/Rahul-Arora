@@ -1,164 +1,350 @@
-// now / prev toggle
-document.querySelectorAll('.toggle button').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-        document.querySelectorAll('.toggle button').forEach(function (b) {
-            b.setAttribute('aria-selected', String(b === btn));
-        });
-        document.querySelectorAll('.timeline').forEach(function (panel) {
-            panel.hidden = panel.dataset.panel !== btn.dataset.tab;
-        });
-    });
-});
-
-// Flickable name. Each letter becomes a little ball: drag and release to throw it,
-// or click to pop it up. Gravity pulls it to the bottom of the viewport, and once it
-// settles it walks back home.
+// now / prev toggle: the pill slides to the chosen tab and that list replays its reveal
 (function () {
-    var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var letters = Array.prototype.slice.call(document.querySelectorAll('.name .l'));
-    var GRAVITY = 2400, BOUNCE = 0.55, FRICTION = 0.985, REST_MS = 1400, HOME_MS = 650;
+    var buttons = Array.prototype.slice.call(document.querySelectorAll('.toggle button'));
+    var pill = document.querySelector('.toggle-pill');
 
-    var bodies = letters.map(function (el) {
-        return { el: el, x: 0, y: 0, vx: 0, vy: 0, r: 0, vr: 0, state: 'home', restAt: 0 };
+    function movePill(btn) {
+        pill.style.setProperty('--w', btn.offsetWidth + 'px');
+        pill.style.setProperty('--x', (btn.offsetLeft - 3) + 'px');
+    }
+
+    buttons.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            buttons.forEach(function (b) { b.setAttribute('aria-selected', String(b === btn)); });
+            movePill(btn);
+            document.querySelectorAll('.xps').forEach(function (panel) {
+                var show = panel.dataset.panel === btn.dataset.tab;
+                panel.hidden = !show;
+                if (!show) return;
+                panel.querySelectorAll('.rv').forEach(function (el, i) {
+                    el.classList.remove('in');
+                    void el.offsetWidth;
+                    el.style.setProperty('--d', i * 70 + 'ms');
+                    el.classList.add('in');
+                });
+            });
+        });
     });
 
-    var running = false, last = 0;
+    movePill(buttons[0]);
+    if (document.fonts) document.fonts.ready.then(function () { movePill(document.querySelector('.toggle [aria-selected="true"]')); });
+})();
 
-    function bounds(b) {
-        // Letter's home box in viewport coords, so we can keep it on screen
-        var rect = b.el.getBoundingClientRect();
-        var homeLeft = rect.left - b.x, homeTop = rect.top - b.y;
-        return {
-            minX: -homeLeft,
-            maxX: document.documentElement.clientWidth - homeLeft - rect.width,
-            maxY: window.innerHeight - homeTop - rect.height - 8
-        };
+// Name animation. Letters rise in one after another, then react to the cursor:
+// the letters nearest it thin out, lift and pick up the accent color, and ease back
+// as it moves away. A single sweep runs after the intro so touch users see it too.
+(function () {
+    var name = document.querySelector('.name');
+    var letters = Array.prototype.slice.call(name.querySelectorAll('.l'));
+    var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    letters.forEach(function (el, i) { el.style.setProperty('--i', i); });
+    if (reduced) {
+        name.classList.add('ready');
+        return;
+    }
+    requestAnimationFrame(function () {
+        requestAnimationFrame(function () { name.classList.add('ready'); });
+    });
+
+    var BASE = 800, MIN = 250, RADIUS = 110, EASE = 0.14;
+    var state = letters.map(function () { return { f: 0 }; });
+    var pointer = null, sweep = null, running = false;
+
+    function centers() {
+        return letters.map(function (el) {
+            var r = el.getBoundingClientRect();
+            return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+        });
     }
 
-    function render(b) {
-        b.el.style.transform = 'translate(' + b.x + 'px,' + b.y + 'px) rotate(' + b.r + 'deg)';
-    }
+    function frame(now) {
+        var target = pointer;
+        if (sweep) {
+            var t = (now - sweep.t0) / sweep.ms;
+            if (t >= 1) sweep = null;
+            else target = { x: sweep.x0 + (sweep.x1 - sweep.x0) * t, y: sweep.y };
+        }
 
-    function tick(now) {
-        var dt = Math.min((now - last) / 1000, 1 / 30);
-        last = now;
-        var active = false;
-
-        bodies.forEach(function (b) {
-            if (b.state === 'flying') {
-                active = true;
-                var lim = bounds(b);
-                b.vy += GRAVITY * dt;
-                b.vx *= FRICTION;
-                b.vr *= FRICTION;
-                b.x += b.vx * dt;
-                b.y += b.vy * dt;
-                b.r += b.vr * dt;
-
-                if (b.x < lim.minX) { b.x = lim.minX; b.vx = Math.abs(b.vx) * BOUNCE; }
-                if (b.x > lim.maxX) { b.x = lim.maxX; b.vx = -Math.abs(b.vx) * BOUNCE; }
-                if (b.y > lim.maxY) {
-                    b.y = lim.maxY;
-                    b.vy = -Math.abs(b.vy) * BOUNCE;
-                    b.vx *= 0.8;
-                    b.vr *= 0.7;
-                    if (Math.abs(b.vy) < 60) b.vy = 0;
-                }
-
-                var resting = b.vy === 0 && Math.abs(b.vx) < 20;
-                if (resting) {
-                    if (!b.restAt) b.restAt = now;
-                    if (now - b.restAt > REST_MS) goHome(b, now);
-                } else {
-                    b.restAt = 0;
-                }
-                render(b);
-            } else if (b.state === 'returning') {
-                active = true;
-                var t = Math.min((now - b.t0) / HOME_MS, 1);
-                var e = 1 - Math.pow(1 - t, 3);
-                b.x = b.fx * (1 - e);
-                b.y = b.fy * (1 - e) - Math.sin(Math.PI * t) * 40;
-                b.r = b.fr * (1 - e);
-                render(b);
-                if (t === 1) {
-                    b.state = 'home';
-                    b.x = b.y = b.r = 0;
-                    b.el.style.transform = '';
-                    b.el.classList.remove('flying');
-                }
-            } else if (b.state === 'held') {
-                active = true;
+        var pts = centers(), moving = false;
+        letters.forEach(function (el, i) {
+            var goal = 0;
+            if (target) {
+                var dx = pts[i].x - target.x, dy = (pts[i].y - target.y) * 1.4;
+                goal = Math.exp(-(dx * dx + dy * dy) / (RADIUS * RADIUS));
             }
+            var s = state[i];
+            s.f += (goal - s.f) * EASE;
+            if (Math.abs(goal - s.f) > 0.002) moving = true;
+            else s.f = goal;
+            el.style.fontVariationSettings = '"wght" ' + Math.round(BASE - (BASE - MIN) * s.f);
+            el.style.transform = s.f > 0.001 ? 'translateY(' + (-0.08 * s.f).toFixed(3) + 'em)' : '';
+            el.style.color = s.f > 0.001 ? 'color-mix(in srgb, var(--court) ' + Math.round(s.f * 100) + '%, var(--ink))' : '';
         });
 
-        if (active) requestAnimationFrame(tick);
+        if (moving || sweep || pointer) requestAnimationFrame(frame);
         else running = false;
     }
 
     function start() {
         if (running) return;
         running = true;
-        last = performance.now();
-        requestAnimationFrame(tick);
+        requestAnimationFrame(frame);
     }
 
-    function goHome(b, now) {
-        b.state = 'returning';
-        b.t0 = now;
-        b.fx = b.x; b.fy = b.y; b.fr = b.r % 360;
-        b.restAt = 0;
-    }
-
-    function launch(b, vx, vy) {
-        b.state = 'flying';
-        b.vx = vx;
-        b.vy = vy;
-        b.vr = vx * 0.6 + (Math.random() - 0.5) * 400;
-        b.restAt = 0;
-        b.el.classList.add('flying');
+    var hero = document.querySelector('.hero');
+    hero.addEventListener('pointermove', function (e) {
+        pointer = { x: e.clientX, y: e.clientY };
         start();
+    });
+    hero.addEventListener('pointerleave', function () {
+        pointer = null;
+        start();
+    });
+
+    // Once the intro has landed, hand the letters to JS and run one sweep
+    var introMs = 900 + letters.length * 45;
+    setTimeout(function () {
+        name.classList.add('live');
+        var r = name.getBoundingClientRect();
+        sweep = { t0: performance.now(), ms: 1600, x0: r.left - RADIUS, x1: r.right + RADIUS, y: r.top + r.height / 2 };
+        start();
+    }, introMs);
+})();
+
+// Slow text reveals across the page. Section headings type themselves out, the intro
+// resolves word by word, and everything else fades up out of a blur as it scrolls in.
+(function () {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!('IntersectionObserver' in window)) return;
+
+    // Intro, word by word, starting once the name has landed
+    var intro = document.querySelector('.intro');
+    // Split text into word spans but keep inline elements (like the Columbia pill) whole
+    var n = 0, frag = document.createDocumentFragment();
+    function wordSpan(child) {
+        var s = document.createElement('span');
+        s.className = 'w';
+        s.style.setProperty('--d', (700 + n++ * 55) + 'ms');
+        s.appendChild(child);
+        return s;
+    }
+    Array.prototype.slice.call(intro.childNodes).forEach(function (node) {
+        if (node.nodeType !== 3) { frag.appendChild(wordSpan(node)); return; }
+        node.textContent.split(/(\s+)/).forEach(function (part) {
+            if (!part) return;
+            if (/^\s+$/.test(part)) frag.appendChild(document.createTextNode(' '));
+            else frag.appendChild(wordSpan(document.createTextNode(part)));
+        });
+    });
+    intro.textContent = '';
+    intro.appendChild(frag);
+    requestAnimationFrame(function () {
+        requestAnimationFrame(function () { intro.classList.add('in'); });
+    });
+
+    // Headings: typewriter with a caret that leaves when it's done
+    var headings = Array.prototype.slice.call(document.querySelectorAll('.block h2'));
+    headings.forEach(function (h) {
+        h.dataset.text = h.textContent;
+        h.setAttribute('aria-label', h.textContent);
+        h.textContent = '';
+        h.style.minHeight = '1.2em';
+    });
+
+    function type(h) {
+        var text = h.dataset.text, i = 0;
+        h.classList.add('typing');
+        (function step() {
+            i++;
+            h.textContent = text.slice(0, i);
+            if (i < text.length) setTimeout(step, 70 + Math.random() * 60);
+            else setTimeout(function () { h.classList.remove('typing'); }, 900);
+        })();
     }
 
-    if (reduced) return;
-
-    bodies.forEach(function (b) {
-        var drag = null;
-
-        b.el.addEventListener('pointerdown', function (ev) {
-            ev.preventDefault();
-            b.el.setPointerCapture(ev.pointerId);
-            b.state = 'held';
-            b.el.classList.add('flying');
-            drag = { sx: ev.clientX - b.x, sy: ev.clientY - b.y, px: ev.clientX, py: ev.clientY, pt: ev.timeStamp, vx: 0, vy: 0, moved: 0 };
-            start();
+    // Everything else
+    var groups = [
+        '.site-preview', '.g-card', '.xps:not([hidden]) .xp', '.xps[hidden] .xp', '.work li',
+        '.li-sync', '.tweet', '.email-card', '.bullets li', '.market', '.contact', '.links', '.foot'
+    ];
+    var items = [];
+    groups.forEach(function (sel) {
+        document.querySelectorAll(sel).forEach(function (el, i) {
+            el.classList.add('rv');
+            el.style.setProperty('--d', (sel === '.site-preview' ? 1400 : i * 90) + 'ms');
+            items.push(el);
         });
-
-        b.el.addEventListener('pointermove', function (ev) {
-            if (!drag) return;
-            var dt = Math.max(ev.timeStamp - drag.pt, 1) / 1000;
-            drag.vx = (ev.clientX - drag.px) / dt;
-            drag.vy = (ev.clientY - drag.py) / dt;
-            drag.moved += Math.abs(ev.clientX - drag.px) + Math.abs(ev.clientY - drag.py);
-            drag.px = ev.clientX; drag.py = ev.clientY; drag.pt = ev.timeStamp;
-            b.x = ev.clientX - drag.sx;
-            b.y = ev.clientY - drag.sy;
-            render(b);
-        });
-
-        function release() {
-            if (!drag) return;
-            if (drag.moved < 6) {
-                // A click: pop it up with a bit of sideways spin
-                launch(b, (Math.random() - 0.5) * 500, -900 - Math.random() * 300);
-            } else {
-                var cap = 3000;
-                launch(b, Math.max(-cap, Math.min(cap, drag.vx)), Math.max(-cap, Math.min(cap, drag.vy)));
-            }
-            drag = null;
-        }
-
-        b.el.addEventListener('pointerup', release);
-        b.el.addEventListener('pointercancel', release);
     });
+
+    var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+            if (!e.isIntersecting) return;
+            io.unobserve(e.target);
+            if (e.target.tagName === 'H2') type(e.target);
+            else e.target.classList.add('in');
+        });
+    }, { rootMargin: '0px 0px -10% 0px' });
+
+    headings.concat(items).forEach(function (el) { io.observe(el); });
+
+    // Hidden "prev" items never intersect; mark them so the toggle can replay them
+    document.querySelectorAll('.xps[hidden] .xp').forEach(function (el) { el.classList.add('in'); });
+})();
+
+// Recap gallery arrows scroll one card at a time, and hide when every card fits
+(function () {
+    var strip = document.querySelector('.gallery');
+    var nav = document.querySelector('.g-nav');
+    function fit() { nav.hidden = strip.scrollWidth <= strip.clientWidth + 1; }
+    fit();
+    window.addEventListener('resize', fit);
+    document.querySelectorAll('.g-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var card = strip.querySelector('.g-card');
+            strip.scrollBy({ left: Number(btn.dataset.dir) * (card.offsetWidth + 18), behavior: 'smooth' });
+        });
+    });
+})();
+
+// Play-money prediction market, run entirely by the visitor. An LMSR market maker prices
+// long (Yes) and short (No). Each visitor starts with a fresh market at 94% and $0 volume,
+// moves it with their own trades, and it's saved in their browser.
+(function () {
+    var root = document.getElementById('pm');
+    if (!root) return;
+
+    var B = 250, START = 0.94, KEY = 'pm-rahul-v3', MAXPTS = 120;
+    function price(q) { var a = Math.exp(q.y / B), c = Math.exp(q.n / B); return a / (a + c); }
+
+    // Shares bought by spending x on a side: cost(q') - cost(q) = x
+    function apply(qs, side, x) {
+        var a = (side === 'yes' ? qs.y : qs.n) / B, c = (side === 'yes' ? qs.n : qs.y) / B;
+        var m = Math.max(a, c), ea = Math.exp(a - m), ec = Math.exp(c - m);
+        var d = B * (Math.log(Math.exp(x / B) * (ea + ec) - ec) - (a - m));
+        var out = { y: qs.y, n: qs.n };
+        out[side === 'yes' ? 'y' : 'n'] += d;
+        return out;
+    }
+
+    var st = null;
+    try { st = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
+    if (!st || !st.hist || !st.hist.length) {
+        st = { q: { y: B * Math.log(START / (1 - START)), n: 0 }, vol: 0, hist: [{ t: Date.now(), p: START }] };
+    }
+    function save() { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} }
+
+    var $ = function (sel) { return root.querySelector(sel); };
+    var line = $('[data-line]'), area = $('[data-area]'), plot = $('[data-plot]');
+    var cross = $('[data-cross]'), dot = $('[data-dot]'), tip = $('[data-tip]');
+    var slider = $('[data-amt]'), amtOut = $('[data-amt-out]'), pctEl = $('[data-pct]');
+
+    function cents(v) { return Math.round(v * 100) + '¢'; }
+    function pct(v) { return Math.round(v * 100) + '%'; }
+    function ago(t) {
+        var s = (Date.now() - t) / 1000;
+        if (s < 60) return 'just now';
+        if (s < 3600) return Math.round(s / 60) + 'm ago';
+        if (s < 86400) return Math.round(s / 3600) + 'h ago';
+        return Math.round(s / 86400) + 'd ago';
+    }
+
+    // Chart: a step for each trade, the last one running to "now". A fresh market is a flat line.
+    var pts = [];
+    function draw() {
+        var ps = st.hist.map(function (h) { return h.p; }), n = ps.length;
+        var lo = Math.min.apply(null, ps) - 0.03, hi = Math.max.apply(null, ps) + 0.03;
+        pts = ps.map(function (v, i) { return [(i / n) * 300, 70 - ((v - lo) / (hi - lo)) * 66]; });
+        var d = 'M0 ' + pts[0][1].toFixed(1);
+        for (var i = 1; i < n; i++) d += ' H' + pts[i][0].toFixed(1) + ' V' + pts[i][1].toFixed(1);
+        d += ' H300';
+        line.setAttribute('d', d);
+        area.setAttribute('d', d + ' V72 H0 Z');
+        $('[data-since]').textContent = n > 1 ? ago(st.hist[0].t) : 'start';
+    }
+
+    function render() {
+        var py = price(st.q);
+        pctEl.textContent = pct(py);
+        $('[data-yes]').textContent = cents(py);
+        $('[data-no]').textContent = cents(1 - py);
+        var ch = (py - START) * 100, chEl = $('[data-change]');
+        chEl.textContent = (ch >= 0 ? '+' : '') + ch.toFixed(1) + '%';
+        chEl.classList.toggle('up', ch >= 0);
+        chEl.classList.toggle('down', ch < 0);
+        $('[data-vol]').textContent = '$' + Math.round(st.vol).toLocaleString('en-US');
+        draw();
+    }
+
+    function amount() { return Number(slider.value) || 0; }
+    function syncSlider() {
+        amtOut.textContent = '$' + amount();
+        slider.style.setProperty('--fill', ((amount() - slider.min) / (slider.max - slider.min) * 100) + '%');
+    }
+    slider.addEventListener('input', syncSlider);
+
+    // Floating price change that rises off the end of the line
+    function float(before, after) {
+        root.querySelectorAll('.pm-float').forEach(function (old) { old.remove(); });
+        var el = document.createElement('span'), diff = (after - before) * 100;
+        el.className = 'pm-float ' + (diff >= 0 ? 'up' : 'down');
+        el.textContent = (diff >= 0 ? '+ ' : '− ') + Math.abs(diff).toFixed(1) + '% → ' + pct(after);
+        el.style.top = (pts[pts.length - 1][1] / 72 * plot.clientHeight) + 'px';
+        plot.appendChild(el);
+        el.addEventListener('animationend', function () { el.remove(); });
+        pctEl.classList.remove('bump');
+        void pctEl.offsetWidth;
+        pctEl.classList.add('bump');
+    }
+
+    root.querySelectorAll('.m-row button').forEach(function (b) {
+        b.addEventListener('click', function () {
+            var x = amount(), before = price(st.q);
+            if (!x) return;
+            st.q = apply(st.q, b.dataset.side, x);
+            st.vol += x;
+            st.hist.push({ t: Date.now(), p: price(st.q), s: b.dataset.side, a: x });
+            if (st.hist.length > MAXPTS) st.hist.splice(1, 1);
+            save();
+            render();
+            float(before, price(st.q));
+        });
+    });
+
+    // Hover (or drag on touch) to read the price at any point
+    function hover(i) {
+        var h = st.hist[i], n = st.hist.length, mid = (i + 0.5) / n * 300, w = plot.clientWidth, x = mid / 300 * w, pt = [mid, pts[i][1]];
+        cross.setAttribute('x1', mid); cross.setAttribute('x2', mid); cross.removeAttribute('hidden');
+        dot.hidden = tip.hidden = false;
+        dot.style.left = x + 'px'; dot.style.top = (pt[1] / 72 * plot.clientHeight) + 'px';
+        tip.textContent = '';
+        var top = document.createElement('div'), b = document.createElement('b');
+        b.textContent = pct(h.p);
+        top.appendChild(b);
+        top.appendChild(document.createTextNode(' · ' + ago(h.t)));
+        tip.appendChild(top);
+        var sub = document.createElement('small');
+        sub.textContent = h.s ? (h.s === 'yes' ? 'long' : 'short') + ' $' + h.a : 'market opened';
+        tip.appendChild(sub);
+        var half = tip.offsetWidth / 2;
+        tip.style.left = Math.min(w - half, Math.max(half, x)) + 'px';
+    }
+    function unhover() { cross.setAttribute('hidden', ''); dot.hidden = tip.hidden = true; }
+    plot.addEventListener('pointermove', function (e) {
+        var r = plot.getBoundingClientRect(), n = st.hist.length;
+        hover(Math.max(0, Math.min(n - 1, Math.floor((e.clientX - r.left) / r.width * n))));
+    });
+    plot.addEventListener('pointerleave', unhover);
+    plot.addEventListener('pointercancel', unhover);
+
+    // How it works
+    var infoBtn = $('.pm-info-btn'), info = document.getElementById('pm-info');
+    infoBtn.addEventListener('click', function () {
+        var open = info.hidden;
+        info.hidden = !open;
+        infoBtn.setAttribute('aria-expanded', String(open));
+    });
+
+    syncSlider();
+    render();
 })();
